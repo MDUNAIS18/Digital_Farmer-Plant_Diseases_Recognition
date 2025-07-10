@@ -1,0 +1,6 @@
+__pycache__/
+*.hdf5
+plant_diseases/db.sqlite3
+.idea/
+venv/
+dataset/

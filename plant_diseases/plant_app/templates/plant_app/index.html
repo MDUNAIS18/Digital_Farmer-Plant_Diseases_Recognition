@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plant Disease Recognition</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #a8e063 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Animated background elements */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="leaves" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="%23ffffff" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23leaves)"/></svg>');
+      animation: float 20s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(15px);
+      padding: 50px 40px;
+      border-radius: 25px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+      max-width: 700px;
+      width: 100%;
+      text-align: center;
+      animation: slideUp 0.8s ease-out;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    @keyframes slideUp {
+      from { 
+        opacity: 0; 
+        transform: translateY(30px) scale(0.95); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+      }
+    }
+
+    header {
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 2.8rem;
+      background: linear-gradient(135deg, #2e7d32, #4caf50, #66bb6a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 4px rgba(46, 125, 50, 0.2);
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 1.1rem;
+      font-weight: 400;
+      opacity: 0.8;
+    }
+
+    .upload-section {
+      margin: 40px 0;
+    }
+
+    .file-upload-container {
+      position: relative;
+      margin: 30px 0;
+    }
+
+    .file-drop-zone {
+      border: 3px dashed #4caf50;
+      padding: 40px 20px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%);
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .file-drop-zone::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.1), transparent);
+      transition: left 0.6s;
+    }
+
+    .file-drop-zone:hover::before {
+      left: 100%;
+    }
+
+    .file-drop-zone:hover {
+      border-color: #2e7d32;
+      background: linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(76, 175, 80, 0.2);
+    }
+
+    .file-drop-zone.dragover {
+      border-color: #1b5e20;
+      background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c8 100%);
+      transform: scale(1.02);
+    }
+
+    .upload-icon {
+      font-size: 3rem;
+      color: #4caf50;
+      margin-bottom: 15px;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-10px); }
+      60% { transform: translateY(-5px); }
+    }
+
+    .upload-text {
+      font-size: 1.2rem;
+      color: #2e7d32;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+
+    .upload-subtext {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+
+    .file-input {
+      position: absolute;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+    }
+
+    .file-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(76, 175, 80, 0.1);
+      border-radius: 12px;
+      border-left: 4px solid #4caf50;
+      display: none;
+      animation: fadeInUp 0.5s ease;
+    }
+
+    .file-info.show {
+      display: block;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .file-name {
+      font-weight: 600;
+      color: #2e7d32;
+      margin-bottom: 5px;
+    }
+
+    .file-size {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .predict-button {
+      background: linear-gradient(135deg, #43a047, #66bb6a);
+      color: white;
+      padding: 15px 40px;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 20px rgba(67, 160, 71, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .predict-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.6s;
+    }
+
+    .predict-button:hover::before {
+      left: 100%;
+    }
+
+    .predict-button:hover {
+      background: linear-gradient(135deg, #388e3c, #4caf50);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(67, 160, 71, 0.4);
+    }
+
+    .predict-button:active {
+      transform: translateY(0);
+    }
+
+    .predict-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .loading {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .loading.show {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid #e0e0e0;
+      border-top: 3px solid #4caf50;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .result-section {
+      margin-top: 40px;
+      padding: 0;
+      animation: slideUp 0.6s ease-out;
+    }
+
+    /* Plant Identification Header */
+    .plant-identification {
+      background: linear-gradient(135deg, #2e7d32, #4caf50);
+      color: white;
+      padding: 30px;
+      border-radius: 20px 20px 0 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .plant-identification::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="white" opacity="0.1"/><circle cx="80" cy="40" r="1.5" fill="white" opacity="0.1"/><circle cx="60" cy="80" r="1" fill="white" opacity="0.1"/></svg>');
+      pointer-events: none;
+    }
+
+    .plant-icon {
+      font-size: 4rem;
+      margin-bottom: 15px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .plant-name {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .diagnosis-badge {
+      margin-top: 10px;
+    }
+
+    .status-healthy, .status-diseased {
+      padding: 8px 20px;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: inline-block;
+    }
+
+    .status-healthy {
+      background: rgba(76, 175, 80, 0.2);
+      color: #1b5e20;
+      border: 2px solid rgba(76, 175, 80, 0.5);
+    }
+
+    .status-diseased {
+      background: rgba(255, 193, 7, 0.2);
+      color: #f57f17;
+      border: 2px solid rgba(255, 193, 7, 0.5);
+    }
+
+    /* Image Analysis Section */
+    .image-analysis {
+      background: white;
+      padding: 30px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .analysis-title {
+      font-size: 1.4rem;
+      color: #2e7d32;
+      font-weight: 600;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .image-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+    }
+
+    .result-image {
+      max-width: 100%;
+      max-height: 400px;
+      border-radius: 15px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .result-image:hover {
+      transform: scale(1.02);
+    }
+
+    .image-overlay {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 10px 15px;
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+    }
+
+    .confidence-score {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .confidence-label {
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+
+    .confidence-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #4caf50;
+    }
+
+    /* Diagnosis Section */
+    .diagnosis-section {
+      background: linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%);
+      padding: 30px;
+      border-radius: 0 0 20px 20px;
+    }
+
+    .section-title {
+      font-size: 1.6rem;
+      color: #1b5e20;
+      font-weight: 600;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    /* Info Cards */
+    .info-card {
+      background: white;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .info-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, #4caf50, #66bb6a);
+      color: white;
+      padding: 20px;
+      position: relative;
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .card-content {
+      padding: 25px;
+    }
+
+    /* Info Items */
+    .info-item {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      gap: 15px;
+    }
+
+    .info-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .info-item.description {
+      align-items: flex-start;
+    }
+
+    .info-icon {
+      font-size: 1.5rem;
+      min-width: 30px;
+      text-align: center;
+    }
+
+    .info-content {
+      flex: 1;
+    }
+
+    .info-label {
+      font-weight: 600;
+      color: #2e7d32;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .info-value {
+      color: #444;
+      line-height: 1.6;
+    }
+
+    /* Treatment Steps */
+    .treatment-steps {
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .step-icon {
+      font-size: 2rem;
+      min-width: 40px;
+      text-align: center;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-weight: 600;
+      color: #2e7d32;
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+
+    .step-description {
+      color: #444;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    /* Urgency Indicator */
+    .urgency-indicator {
+      background: rgba(255, 193, 7, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 4px solid #ffc107;
+    }
+
+    .urgency-label {
+      font-weight: 600;
+      color: #f57f17;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .urgency-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 193, 7, 0.2);
+      border-radius: 4px;
+      margin-bottom: 5px;
+      overflow: hidden;
+    }
+
+    .urgency-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .urgency-fill.low {
+      width: 30%;
+      background: #4caf50;
+    }
+
+    .urgency-fill.medium {
+      width: 60%;
+      background: #ffc107;
+    }
+
+    .urgency-fill.high {
+      width: 90%;
+      background: #f44336;
+    }
+
+    .urgency-text {
+      font-size: 0.9rem;
+      color: #f57f17;
+      font-weight: 500;
+    }
+
+    /* Info Grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 10px;
+    }
+
+    .info-box {
+      background: linear-gradient(135deg, #f8fff8, #e8f5e8);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      border: 1px solid rgba(76, 175, 80, 0.2);
+      transition: transform 0.3s ease;
+    }
+
+    .info-box:hover {
+      transform: translateY(-3px);
+    }
+
+    .box-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .box-title {
+      font-weight: 600;
+      color: #2e7d32;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .box-content {
+      color: #666;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    /* Placeholder */
+    .placeholder {
+      text-align: center;
+    }
+
+    .placeholder-icon {
+      font-size: 3rem;
+      margin-bottom: 15px;
+      animation: spin 2s linear infinite;
+    }
+
+    .placeholder-text {
+      color: #666;
+      font-style: italic;
+      margin: 0;
+    }
+
+    /* Technical Information */
+    .technical-info {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .tech-details {
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      padding: 15px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .tech-details summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #2e7d32;
+      margin-bottom: 10px;
+    }
+
+    .tech-details p {
+      margin: 5px 0;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .container {
+        padding: 30px 20px;
+        margin: 10px;
+      }
+
+      header h1 {
+        font-size: 2.2rem;
+      }
+
+      .file-drop-zone {
+        padding: 30px 15px;
+      }
+
+      .upload-icon {
+        font-size: 2.5rem;
+      }
+
+      .predict-button {
+        width: 100%;
+        padding: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      header h1 {
+        font-size: 1.8rem;
+      }
+
+      .subtitle {
+        font-size: 1rem;
+      }
+
+      .file-drop-zone {
+        padding: 25px 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>🌱 Plant Disease Recognition</h1>
+      <p class="subtitle">Upload a leaf image to detect plant diseases instantly</p>
+    </header>
+
+    <form method="post" enctype="multipart/form-data" id="uploadForm">
+      {% csrf_token %}
+      <div class="upload-section">
+        <div class="file-upload-container">
+          <div class="file-drop-zone" id="dropZone">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Choose a file or drag it here</div>
+            <div class="upload-subtext">Supported formats: JPG, PNG, JPEG (Max 5MB)</div>
+            <input type="file" name="myfile" id="fileInput" class="file-input" accept="image/*">
+          </div>
+          
+          <div class="file-info" id="fileInfo">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+          </div>
+        </div>
+        
+        <button type="submit" class="predict-button" id="predictBtn" disabled>
+          🔍 Analyze Plant Disease
+        </button>
+        
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <span>Analyzing your plant image...</span>
+        </div>
+      </div>
+    </form>
+{% if result %}
+  <div class="result-section">
+    <div class="plant-identification">
+      <div class="plant-icon">🌿</div>
+      <h2 class="plant-name">{{ plant_name|default:result }}</h2>
+      <div class="diagnosis-badge">
+        <div style="margin-top:8px; color:#1b5e20; font-weight:600;">Plant Name: {{ plant_name|default:result }}</div>
+        {% if disease_name %}
+          <div style="margin-top:8px; color:#f57f17; font-weight:600;">
+            Disease Name: {{ disease_name }}
+          </div>
+        {% endif %}
+        {% if solution %}
+          <div style="margin-top:4px; color:#00695c; font-weight:500;">
+            Solution: {{ solution }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+
+      <!-- Image Analysis Section -->
+      {% if output_img_b64 %}
+      <div class="image-analysis">
+        <h3 class="analysis-title">📸 Image Analysis Result</h3>
+        <div class="image-container">
+          <img src="data:image/jpeg;base64,{{ output_img_b64 }}" alt="Plant Analysis Result" class="result-image">
+          <div class="image-overlay">
+            <div class="confidence-score">
+              <span class="confidence-label">Confidence</span>
+              <span class="confidence-value">{{ confidence }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if 'non healthy' in result|lower or 'nonhealthy' in result|lower or 'unhealthy' in result|lower %}
+        <!-- Diagnosis Details Section for non-healthy plants -->
+        <div class="diagnosis-section">
+          <h3 class="section-title">🔬 Detailed Diagnosis</h3>
+          {% if leaf_details %}
+          <!-- Disease Information Card -->
+          <div class="info-card disease-info">
+            <div class="card-header">
+              <h4 class="card-title">🦠 Disease Information</h4>
+            </div>
+            <div class="card-content">
+              <div class="info-item">
+                <div class="info-icon">🔍</div>
+                <div class="info-content">
+                  <span class="info-label">Disease Name:</span>
+                  <span class="info-value">{% if leaf_details.disease_name %}{{ leaf_details.disease_name }}{% else %}{{ result }}{% endif %}</span>
+                </div>
+              </div>
+              <div class="info-item">
+                <div class="info-icon">⚡</div>
+                <div class="info-content">
+                  <span class="info-label">Primary Cause:</span>
+                  <span class="info-value">{{ leaf_details.cause }}</span>
+                </div>
+              </div>
+              <div class="info-item description">
+                <div class="info-icon">📝</div>
+                <div class="info-content">
+                  <span class="info-label">Description:</span>
+                  <span class="info-value">{{ leaf_details.description }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Treatment & Solution Card -->
+          <div class="info-card treatment-info">
+            <div class="card-header">
+              <h4 class="card-title">💊 Treatment & Solution</h4>
+            </div>
+            <div class="card-content">
+              <div class="treatment-steps">
+                <div class="step-icon">🎯</div>
+                <div class="step-content">
+                  <span class="step-title">Recommended Action:</span>
+                  <p class="step-description">{{ leaf_details.solution }}</p>
+                </div>
+              </div>
+              <div class="urgency-indicator">
+                <span class="urgency-label">Treatment Urgency:</span>
+                <div class="urgency-bar">
+                  <div class="urgency-fill medium"></div>
+                </div>
+                <span class="urgency-text">Moderate - Treat within 1-2 weeks</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Information Card -->
+          <div class="info-card additional-info">
+            <div class="card-header">
+              <h4 class="card-title">ℹ️ Additional Information</h4>
+            </div>
+            <div class="card-content">
+              <div class="info-grid">
+                <div class="info-box">
+                  <div class="box-icon">🌡️</div>
+                  <div class="box-title">Prevention</div>
+                  <div class="box-content">Regular monitoring and proper plant care</div>
+                </div>
+                <div class="info-box">
+                  <div class="box-icon">💧</div>
+                  <div class="box-title">Watering</div>
+                  <div class="box-content">Maintain optimal moisture levels</div>
+                </div>
+                <div class="info-box">
+                  <div class="box-icon">☀️</div>
+                  <div class="box-title">Sunlight</div>
+                  <div class="box-content">Ensure adequate light exposure</div>
+                </div>
+                <div class="info-box">
+                  <div class="box-icon">🌱</div>
+                  <div class="box-title">Nutrients</div>
+                  <div class="box-content">Balanced fertilization schedule</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <!-- Placeholder for when no details are available -->
+          <div class="info-card placeholder">
+            <div class="card-content">
+              <div class="placeholder-icon">🔄</div>
+              <p class="placeholder-text">
+                Detailed plant diagnosis and treatment recommendations will appear here after analysis.
+              </p>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if output_img_path %}
+      <div class="technical-info">
+        <details class="tech-details">
+          <summary>🔧 Technical Information</summary>
+          <p><strong>Output image saved at:</strong> {{ output_img_path }}</p>
+          <p><strong>Analysis timestamp:</strong> <span id="timestamp"></span></p>
+          <p><strong>Model version:</strong> Plant Disease Classifier v2.1</p>
+        </details>
+      </div>
+      {% endif %}
+    </div>
+
+    <script>
+      // Set current timestamp
+      var ts = document.getElementById('timestamp');
+      if(ts) ts.textContent = new Date().toLocaleString();
+      // Fix double file dialog issue
+      dropZone.addEventListener('click', function(e) {
+        if (e.target !== fileInput) {
+          fileInput.click();
+        }
+      });
+    </script>
+   
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const predictBtn = document.getElementById('predictBtn');
+    const uploadForm = document.getElementById('uploadForm');
+    const loading = document.getElementById('loading');
+
+    // File size formatter
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Handle file selection
+    function handleFileSelect(file) {
+      if (file && file.type.startsWith('image/')) {
+        fileName.textContent = `📄 ${file.name}`;
+        fileSize.textContent = `📏 Size: ${formatFileSize(file.size)}`;
+        fileInfo.classList.add('show');
+        predictBtn.disabled = false;
+        
+        // Add success animation to drop zone
+        dropZone.style.borderColor = '#2e7d32';
+        dropZone.style.background = 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c8 100%)';
+        setTimeout(() => {
+          dropZone.style.borderColor = '#4caf50';
+          dropZone.style.background = 'linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%)';
+        }, 1000);
+      } else {
+        alert('Please select a valid image file (JPG, PNG, JPEG)');
+        fileInput.value = '';
+      }
+    }
+
+    // File input change event
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      handleFileSelect(file);
+    });
+
+    // Drag and drop events
+    dropZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        fileInput.files = files;
+        handleFileSelect(files[0]);
+      }
+    });
+
+    // Form submission with loading state
+    uploadForm.addEventListener('submit', function(e) {
+      if (fileInput.files.length === 0) {
+        e.preventDefault();
+        alert('Please select an image file first!');
+        return;
+      }
+      
+      // Show loading state
+      predictBtn.disabled = true;
+      predictBtn.textContent = 'Analyzing...';
+      loading.classList.add('show');
+      
+      // Hide file info during processing
+      fileInfo.style.opacity = '0.5';
+    });
+
+    // Click to select file
+    dropZone.addEventListener('click', function() {
+      fileInput.click();
+    });
+
+    // Prevent default drag behaviors on document
+    document.addEventListener('dragover', function(e) {
+      e.preventDefault();
+    });
+
+    document.addEventListener('drop', function(e) {
+      e.preventDefault();
+    });
+  </script>
+</body>
+
+</html>

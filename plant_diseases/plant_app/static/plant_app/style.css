@@ -1,0 +1,129 @@
+/* Reset & Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f5fdfc;
+  overflow-x: hidden;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Floating Blobs Background */
+.floating-blobs .blob {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(135deg, #86efac, #34d399);
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: floatBlob 15s infinite ease-in-out alternate;
+}
+.floating-blobs .delay-1 {
+  top: 20%;
+  left: 70%;
+  animation-delay: 3s;
+}
+.floating-blobs .delay-2 {
+  top: 60%;
+  left: 10%;
+  animation-delay: 6s;
+}
+
+@keyframes floatBlob {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(50px, -30px); }
+}
+
+/* Container */
+.container {
+  max-width: 600px;
+  margin: 5rem auto;
+  padding: 2rem;
+  background: #ffffffcc;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 10;
+}
+
+/* Title */
+.animated-title {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 2rem;
+  color: #065f46;
+  animation: fadeInDown 1.2s ease forwards;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Upload Form */
+.upload-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+}
+.file-label {
+  display: inline-block;
+  padding: 12px 25px;
+  background-color: #10b981;
+  color: white;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.file-label:hover {
+  background-color: #059669;
+}
+.predict-btn {
+  padding: 10px 24px;
+  background-color: #2563eb;
+  color: #fff;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.predict-btn:hover {
+  background-color: #1e40af;
+}
+
+/* Result Section */
+.result-card {
+  background-color: #ecfdf5;
+  border: 2px dashed #34d399;
+  padding: 1.5rem;
+  margin-top: 2rem;
+  border-radius: 16px;
+}
+.result-card h2 {
+  color: #047857;
+  font-size: 1.5rem;
+}
+.preview-image {
+  margin-top: 1rem;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 10px;
+  border: 2px solid #d1fae5;
+}
+.details {
+  margin-top: 1rem;
+  text-align: left;
+  font-size: 0.95rem;
+  background: #ffffff;
+  padding: 1rem;
+  border-radius: 10px;
+}
